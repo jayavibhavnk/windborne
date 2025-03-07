@@ -1665,10 +1665,44 @@ with st.sidebar:
     | GeoPandas & Shapely | Geospatial analysis |
     
     ---
-     
-     ### 🖥️ User Interface Enhancements
-     This interface includes intuitive chat interactions with clear separation between user queries, assistant responses, detailed reasoning steps (expandable), and generated visualizations for an improved user experience.
 
+
+    ### 🛠️ Available Tools & Parameters:
+    
+    You can specify these parameters directly in your prompts:
+    
+    **1. Balloon Position Tracker**
+    - `num_balloons` *(int, optional, default=all)*
+    - `history_hours` *(int, default=24)*
+    - Example Prompt: `"Show balloon locations for last 12 hours, num_balloons=10"`
+    
+    **2. Altitude Analyzer**
+    - `num_hours` *(int, default=4)*
+    - `max_altitude` *(float, optional, default=50 km)*
+    
+    **3. Wind Speed Tool**
+    - `hours` *(int, default=2)*
+    - `top_n` *(int, default=5)*
+    
+    **4. Balloon Weather Analyzer**
+    - `n` *(int, default=5)*
+    - `plot` *(bool, default=true)*
+    
+    **5. Aircraft Proximity Checker**
+    - `distance_km` *(float, default=100 km)*
+    - `plot` *(bool, default=true)*
+    
+    **5. Country Weather Monitor**
+    - `country_name` *(str, required)*
+    - `buffer_km` *(float, default=500 km)*
+    - `plot` *(bool, default=true)*
+    
+    **6. Coverage Analyzer (Dead Zones)**
+    - `threshold_km` *(float, default=500 km)*
+    - `hours` *(int, default=24)*
+    - `plot` *(bool, default=true)*
+
+    ---
      Feel free to explore sample prompts or input custom queries!
      
      """)
