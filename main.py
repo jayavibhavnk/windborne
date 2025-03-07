@@ -1588,6 +1588,8 @@ with st.sidebar:
     This interactive application leverages advanced **Large Language Model (LLM) agents** and specialized tools to monitor and analyze balloon data, weather conditions, and related geospatial insights.
     
     ---
+
+    NOTE: If the request is taking too long, refresh the website and try again after a few seconds (may be rate limit error)
     
     ### 🌐 APIs & Data Sources
     
