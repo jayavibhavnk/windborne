@@ -1583,27 +1583,95 @@ if "messages" not in st.session_state:
 # Sidebar Markdown Explanation (doesn't interfere with main app)
 with st.sidebar:
     st.markdown("""
-    ## 🎈 Balloon Monitoring App
+    ## 🎈 Balloon Monitoring & Analysis App
     
-    This app leverages advanced LLM agents and specialized tools to analyze balloon data, weather conditions, and related insights.
+    This interactive application leverages advanced **Large Language Model (LLM) agents** and specialized tools to monitor and analyze balloon data, weather conditions, and related geospatial insights.
     
-    ### 🔧 Tools & Functionalities:
-    - **Balloon Position Tracker**: Real-time/historical balloon positions.
-    - **Altitude Analyzer**: Analyze altitude patterns.
-    - **Wind Speed Tool**: Calculate wind speeds using balloons.
-    - **Weather Analyzer**: Weather conditions around balloons.
-    - **Aircraft Proximity Checker**: Detect aircraft near balloons.
-    - **Country Weather Monitor**: Monitor balloons around country borders.
-    - **Coverage Analyzer**: Identify balloon coverage dead zones.
+    ---
+    
+    ### 🌐 APIs & Data Sources
+    
+    The app integrates several external APIs to fetch real-time and historical data:
+    
+    - **WindBorne Systems API**:
+      - Provides real-time and historical balloon positions globally.
+      - Offers high-resolution atmospheric observations from a constellation of global sounding balloons.
+      - Data includes latitude, longitude, altitude, and timestamps for balloon positions[3].
+    
+    - **Open-Meteo API**:
+      - Provides real-time weather forecasts including temperature, wind speed, precipitation, and humidity at specific geographic coordinates.
+      - Used extensively for weather analysis around balloon positions[1].
+    
+    - **OpenSky Network API**:
+      - Real-time aircraft tracking data including latitude, longitude, altitude, velocity, and identification details.
+      - Enables proximity checks between balloons and aircraft to ensure airspace safety[1].
+    
+    ---
+    
+    ### 🛠️ Tools & Functionalities Explained:
+    
+    1. **Balloon Position Tracker**
+       - Fetches real-time and historical balloon positions from WindBorne Systems API.
+       - Visualizes balloon locations on interactive maps using Cartopy[1].
+    
+    2. **Altitude Analyzer**
+       - Analyzes altitude patterns of balloons using historical data.
+       - Calculates wind shear and atmospheric layer statistics using SciPy regression analysis.
+       - Generates scatter plots, distribution maps, and boxplots for altitude vs wind speed data[1].
+    
+    3. **Wind Speed Tool**
+       - Computes wind speeds by tracking positional changes of balloons over time.
+       - Compares calculated wind speeds with Open-Meteo API forecasted wind speeds for validation[1].
+    
+    4. **Balloon Weather Analyzer**
+       - Retrieves current weather conditions surrounding top N balloons using Open-Meteo API.
+       - Provides visualizations highlighting temperature and wind conditions around balloons[1].
+    
+    5. **Aircraft Proximity Checker**
+       - Detects proximity between balloons (WindBorne Systems API) and aircraft (OpenSky Network API).
+       - Calculates 3D distances using Haversine formula to identify potential collision risks[1].
+    
+    6. **Country Weather Monitor**
+       - Monitors balloons around a country's borders within a specified radius.
+       - Uses geospatial data from Natural Earth dataset to define country borders and buffer zones[1].
+    
+    7. **Coverage Analyzer**
+       - Identifies areas lacking balloon coverage ("dead zones") based on historical balloon position data.
+       - Utilizes spatial analysis techniques (BallTree algorithm) to calculate distances between grid points and nearest balloons[1].
+    
+    ---
+    
+    ### 🤖 How LLM Agent Works:
+    
+    The app integrates an LLM agent (powered by LangChain framework) that intelligently selects the appropriate tool based on your query. 
+    
+    Workflow:
+    1. You input a natural language query.
+    2. The agent interprets your request using advanced language understanding capabilities.
+    3. It selects the most suitable tool from the available options (e.g., BalloonTracker, AltitudeAnalyzer).
+    4. The selected tool is executed with appropriate parameters provided by the agent in JSON format.
+    5. Results—including summaries, statistics, or visualizations—are returned back to you clearly within the interface.
+    
+    ---
+    
+    ### ⚙️ Technologies Used:
+    
+    | Technology | Purpose |
+    |-------------|----------|
+    | WindBorne Systems API | Balloon position & atmospheric data |
+    | Open-Meteo API | Real-time weather forecasts |
+    | OpenSky Network API | Aircraft position tracking |
+    | Cartopy & Matplotlib | Geospatial visualization |
+    | GeoPandas & Shapely | Geospatial analysis |
+    
+    ---
+     
+     ### 🖥️ User Interface Enhancements
+     This interface includes intuitive chat interactions with clear separation between user queries, assistant responses, detailed reasoning steps (expandable), and generated visualizations for an improved user experience.
 
-    ### 🤖 How it Works:
-    - Your query is interpreted by an LLM agent.
-    - The agent selects the appropriate tool based on your request.
-    - The tool performs the analysis and returns results (including visualizations).
-    
-    Feel free to explore the sample prompts or ask your own questions!
-    
-    """)
+     Feel free to explore sample prompts or input custom queries!
+     
+     """)
 
 # Title and description
 st.title("🎈 Balloon Monitoring and Analysis System")
