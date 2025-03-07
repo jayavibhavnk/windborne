@@ -6,3 +6,4 @@ cartopy
 matplotlib
 scipy
 haversine
+scikit-learn
