@@ -1460,6 +1460,7 @@ Final Answer: [the concise answer to the original question]
 - If task is completed, terminate please!!!!!! please dont irritate me, if you get the result terminate immediately, sometimes the result is just a plot
 - Dont try to replace one tool with another you will not get the right result
 - For Deadzone, it usually works in the first run, stop after the first run even if error
+- Do not say generation over terminating, give a brief explanation of the output and be done 
 
 
 Begin!
@@ -1737,7 +1738,7 @@ if user_input:
             with st.expander("🔍 Detailed Steps"):
                 st.text(verbose_output)
 
-        st.markdown("**✅ Final Answer**")
+        # st.markdown("**✅ Final Answer**")
         st.markdown(final_answer)
 
         for path in plot_paths:
