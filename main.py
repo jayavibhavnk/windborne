@@ -1325,68 +1325,90 @@ def extract_plot_paths(text):
                 matches.append(path)
     return matches if matches else None
 
-# Streamlit UI
-import streamlit as st
-import os
+# Function to extract plot paths from text
+def extract_plot_paths(text):
+    """Extracts file paths for generated plots from the agent's response."""
+    # Matches "Plot generated at: path.png" or "scatter: path1.png"
+    single_plots = re.findall(r"Plot generated at: (\S+)", text)
+    multi_plots = re.findall(r"\b\w+:\s*(\S+\.png)", text)
+    return single_plots + multi_plots
 
-# Initialize session state to track if the image should be shown
-if "show_image" not in st.session_state:
-    st.session_state.show_image = True
-if "history" not in st.session_state:
-    st.session_state.history = []
-
-# Sidebar for better UI
-st.sidebar.title("Image Display App")
-st.sidebar.markdown("""
-### Instructions
-- Enter the path to an image file below.
-- The image will be displayed in the main area.
-- Click "Hide Image" to remove it from the display.
-- Use "Clear History" to reset the app.
+# Streamlit UI Setup
+st.title("🎈 Balloon Monitoring and Analysis System")
+st.markdown("""
+Welcome to the upgraded Balloon Monitoring and Analysis System! Ask anything about balloon positions, weather, or analysis. Check out the sample prompts below to get started.
 """)
-if st.sidebar.button("Clear History"):
-    st.session_state.history = []
-    st.session_state.show_image = True
-    st.experimental_rerun()
 
-# Main UI
-st.title("🖼️ Image Display and Management")
+st.markdown("### Sample Prompts")
+st.markdown("""
+- **balloon locations on the map last 24 hours**
+- **planes near balloons, 50 kms**
+- **calculate wind speed using the balloons, use last 2 hours**
+- **top 5 balloons weather surroundings**
+- **Altitude analysis**
+- **check deadzones**
+- **check how many balloons are surrounding France for weather analysis**
+""")
 
-# Input for image path
-image_path = st.text_input("Enter the path to your image (e.g., example_image.png):", "")
+# Initialize chat history in session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if image_path:
-    # Add user action to history
-    st.session_state.history.append(f"User entered image path: {image_path}")
+# Display chat history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+        if "plots" in message and message["plots"]:
+            for plot_path in message["plots"]:
+                if os.path.exists(plot_path):
+                    st.image(plot_path, caption=f"Generated Plot: {os.path.basename(plot_path)}")
+                else:
+                    st.write(f"*Plot file not found: {plot_path}*")
+
+# User input field
+user_input = st.chat_input("Ask your question here...")
+
+# Process user input
+if user_input:
+    # Add user message to history and display it
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
     
-    # Check if the image exists
-    if os.path.exists(image_path):
-        # Verbose output
-        st.write("📤 Displaying image...")
-        
-        # Display image if show_image is True
-        if st.session_state.show_image:
-            st.image(image_path, caption=f"Image: {os.path.basename(image_path)}", use_column_width=True)
-            
-            # Button to hide the image
-            if st.button("Hide Image"):
-                st.session_state.show_image = False
-                st.write("🗑️ Image hidden from display.")
-                st.session_state.history.append("Image hidden by user.")
-                st.experimental_rerun()  # Rerun to update the UI
-        else:
-            st.write("ℹ️ Image is currently hidden.")
-            # Option to show the image again
-            if st.button("Show Image Again"):
-                st.session_state.show_image = True
-                st.write("🔄 Image display restored.")
-                st.session_state.history.append("Image display restored by user.")
-                st.experimental_rerun()
-    else:
-        st.error(f"🚫 Image not found at: {image_path}")
-        st.session_state.history.append(f"Error: Image not found at {image_path}")
-
-# Display history with verbose output
-st.markdown("### Action History")
-for entry in st.session_state.history:
-    st.write(f"- {entry}")
+    # Run the agent with verbose output capture
+    try:
+        with st.spinner("Processing your request..."):
+            # Capture verbose output from the agent
+            f = io.StringIO()
+            with redirect_stdout(f):
+                result = agent_executor.run(user_input)  # Assumes agent_executor is defined
+            verbose_output = f.getvalue()
+            final_answer = result
+            plot_paths = extract_plot_paths(final_answer)
+    except Exception as e:
+        final_answer = f"Oops, something went wrong: {str(e)}"
+        verbose_output = ""
+        plot_paths = []
+    
+    # Display assistant response
+    with st.chat_message("assistant"):
+        # Show verbose output in a collapsible expander
+        if verbose_output:
+            with st.expander("Show Detailed Steps"):
+                st.text(verbose_output)
+        # Show the final answer
+        st.markdown("**Final Answer**")
+        st.markdown(final_answer)
+        # Display any generated plots
+        if plot_paths:
+            for path in plot_paths:
+                if os.path.exists(path):
+                    st.image(path, caption=os.path.basename(path))
+                else:
+                    st.write(f"Plot file not found: {path}")
+    
+    # Add assistant message to history, including plots if any
+    message = {"role": "assistant", "content": final_answer}
+    if plot_paths:
+        message["plots"] = plot_paths
+    st.session_state.messages.append(message)
