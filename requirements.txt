@@ -5,3 +5,4 @@ geopandas
 cartopy
 matplotlib
 scipy
+haversine
