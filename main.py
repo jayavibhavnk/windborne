@@ -254,7 +254,7 @@ class BalloonTracker:
         # Save and return path
         filepath = f"balloon_positions_{datetime.now().strftime('%Y%m%d%H%M')}.png"
         plt.savefig(filepath, dpi=150, bbox_inches='tight')
-        plt.show()
+        # plt.show()
         plt.close()
         return filepath
 
