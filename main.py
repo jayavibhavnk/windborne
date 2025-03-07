@@ -1106,6 +1106,188 @@ class CountryWeatherMonitor:
                f"Balloon positions: {[b['distance'] for b in self.balloons]}")
 
 
+##tool 7
+import requests
+import numpy as np
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from sklearn.neighbors import BallTree
+from datetime import datetime
+
+class BalloonCoverageAnalyzer:
+    """
+    Tool 7: Balloon Coverage Dead Zone Detection
+
+    Parameters:
+    - threshold_km: Distance threshold for dead zones (default 500)
+    - hours: Historical data hours (default 24)
+    - plot: Generate visualization (default True)
+
+    Returns:
+    - summary: Coverage statistics
+    - plot_path: Path to generated map
+    - raw_data: Processed coverage data
+    """
+
+    def __init__(self):
+        self.base_url = "https://a.windbornesystems.com/treasure"
+
+    def analyze(self, threshold_km=500, hours=24, plot=True):
+        """Main analysis method preserving original functionality"""
+        result = {
+            "summary": "",
+            "plot_path": None,
+            "raw_data": {}
+        }
+
+        try:
+            # Original data collection logic
+            all_positions = []
+            for hours_ago in range(hours):
+                positions = self._fetch_data(hours_ago)
+                all_positions.extend(positions)
+
+            if not all_positions:
+                raise ValueError("No valid balloon positions found")
+
+            # Original processing logic
+            all_positions = np.array(all_positions)
+            print(f"Collected {len(all_positions)} balloon positions.")  # Preserve original print
+
+            # Convert to radians
+            all_positions_rad = np.deg2rad(all_positions)
+
+            # Create grid (original 1x1 degree resolution)
+            lats = np.arange(-90, 91, 1)
+            lons = np.arange(-180, 180, 1)
+            lon_grid, lat_grid = np.meshgrid(lons, lats)
+            grid_points = np.vstack([lat_grid.ravel(), lon_grid.ravel()]).T
+            grid_points_rad = np.deg2rad(grid_points)
+
+            # BallTree calculations
+            tree = BallTree(all_positions_rad, metric='haversine')
+            distances_rad, _ = tree.query(grid_points_rad, k=1)
+            distances_rad = distances_rad.flatten()
+            earth_radius = 6371
+            distances_km = distances_rad * earth_radius
+            distances_km_grid = distances_km.reshape(lat_grid.shape)
+
+            # Dead zone identification
+            dead_zones = distances_km_grid > threshold_km
+
+            # Store raw data
+            result["raw_data"] = {
+                "lats": lat_grid,
+                "lons": lon_grid,
+                "distances": distances_km_grid,
+                "dead_zones": dead_zones
+            }
+
+            # Generate outputs
+            result["summary"] = self._generate_summary(all_positions, dead_zones, threshold_km)
+
+            if plot:
+                result["plot_path"] = self._generate_plot(
+                    lat_grid, lon_grid, distances_km_grid,
+                    dead_zones, all_positions, threshold_km
+                )
+
+        except Exception as e:
+            result["summary"] = f"Analysis failed: {str(e)}"
+
+        return result
+
+    def _fetch_data(self, hours_ago):
+        """Original fetch_data implementation"""
+        url = f"{self.base_url}/{hours_ago:02d}.json"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
+            valid_positions = []
+            for pos in data:
+                if len(pos) == 3:
+                    lat, lon, _ = pos
+                    if -90 <= lat <= 90 and -180 <= lon <= 180:
+                        valid_positions.append([lat, lon])
+            return valid_positions
+        except (requests.RequestException, ValueError) as e:
+            print(f"Error fetching data for {hours_ago} hours ago: {str(e)[:50]}...")
+            return []
+
+    def _generate_plot(self, lat_grid, lon_grid, distances, dead_zones, positions, threshold):
+        """Original plotting logic with auto-saving"""
+        fig = plt.figure(figsize=(15, 10))
+        ax = fig.add_subplot(1, 1, 1, projection=ccrs.Robinson())
+
+        # Original map features
+        ax.add_feature(cfeature.LAND, facecolor='lightgray')
+        ax.add_feature(cfeature.OCEAN, facecolor='lightblue')
+        ax.add_feature(cfeature.COASTLINE)
+        ax.add_feature(cfeature.BORDERS, linestyle=':')
+
+        # Original visualization elements
+        c = ax.pcolormesh(lon_grid, lat_grid, distances,
+                         transform=ccrs.PlateCarree(), cmap='viridis', vmax=1000)
+        plt.colorbar(c, ax=ax, label='Distance to Nearest Balloon (km)')
+
+        ax.contourf(lon_grid, lat_grid, dead_zones, levels=[0.5, 1],
+                   colors='red', alpha=0.5, transform=ccrs.PlateCarree())
+
+        sampled_positions = positions[::100]
+        ax.scatter(sampled_positions[:, 1], sampled_positions[:, 0],
+                  transform=ccrs.PlateCarree(), color='blue', s=5,
+                  alpha=0.5, label='Balloon Positions (Sampled)')
+
+        ax.set_global()
+        ax.set_title(f"Balloon Coverage and Dead Zones (Red: >{threshold} km)")
+        ax.legend(loc='lower left')
+
+        plot_path = f"coverage_{datetime.now().strftime('%Y%m%d%H%M')}.png"
+        plt.savefig(plot_path, bbox_inches='tight')
+        plt.close()
+        return plot_path
+
+    def _generate_summary(self, positions, dead_zones, threshold):
+        """Generate summary from original data"""
+        dead_percentage = (dead_zones.mean() * 100)
+        return (
+            f"Coverage Analysis Summary:\n"
+            f"- Balloons analyzed: {len(positions)}\n"
+            f"- Dead zone threshold: {threshold} km\n"
+            f"- Global dead zone coverage: {dead_percentage:.1f}%"
+        )
+
+# Schema for LLM integration
+COVERAGE_SCHEMA = {
+    "name": "balloon_coverage",
+    "description": "Analyzes balloon coverage and identifies dead zones",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "threshold_km": {
+                "type": "number",
+                "description": "Dead zone distance threshold (default 500)"
+            },
+            "hours": {
+                "type": "integer",
+                "description": "Historical data hours (default 24)"
+            },
+            "plot": {
+                "type": "boolean",
+                "description": "Generate visualization (default True)"
+            }
+        }
+    },
+    "returns": {
+        "summary": "text summary of coverage analysis",
+        "plot_path": "path to generated map image",
+        "raw_data": "processed coverage data arrays"
+    }
+}
+
+
 import json
 import re
 from langchain.agents import Tool, AgentExecutor, LLMSingleActionAgent, AgentOutputParser
