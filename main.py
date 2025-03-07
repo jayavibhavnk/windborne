@@ -1321,8 +1321,6 @@ llm_chain = LLMChain(llm=llm, prompt=prompt)
 agent = LLMSingleActionAgent(llm_chain=llm_chain, output_parser=output_parser, stop=["\nObservation:"], allowed_tools=[tool.name for tool in tools])
 agent_executor = AgentExecutor.from_agent_and_tools(agent=agent, tools=tools, verbose=True)
 
-# Example Usage
-if __name__ == "__main__":
     # # Example 1: Check proximity to planes
     # question1 = "balloon locations on the map last 24 hours"
     # print("Running example 1...")
@@ -1364,7 +1362,9 @@ if __name__ == "__main__":
     # print("\nRunning example 2...")
     # result2 = agent_executor.run(question2)
     # print("Result for example 2:", result2)
-# Function to Extract Plot Paths
+
+    
+    # Function to Extract Plot Paths
 def extract_plot_paths(text):
     """Extract one or more plot paths from the agent's response."""
     matches = re.findall(r"Plot generated at: (.+)", text)
