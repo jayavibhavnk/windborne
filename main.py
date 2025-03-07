@@ -1334,6 +1334,13 @@ def extract_plot_paths(text):
     return single_plots + multi_plots
 
 # Streamlit UI Setup
+
+import streamlit as st
+import os
+import re
+from langchain.agents import AgentExecutor
+from contextlib import redirect_stdout
+import io
 st.title("🎈 Balloon Monitoring and Analysis System")
 st.markdown("""
 Welcome to the upgraded Balloon Monitoring and Analysis System! Ask anything about balloon positions, weather, or analysis. Check out the sample prompts below to get started.
