@@ -1452,7 +1452,7 @@ Final Answer: [the concise answer to the original question]
 - If a parameter is optional and not specified by the user, use the default value or omit it if appropriate.
 - Be thorough, conversational, and clear in your Thought steps to explain your reasoning.
 - If the question is unclear, make reasonable assumptions and explain them.
-- If the observation contains 'Task completed', summarize the results and provide the final answer, then stop.
+- If the observation contains 'Task completed', summarize the results and provide the final answer, then stop, give a little detailed answer and then stop.
 - Some tools generate plots; include the plot path in your final answer if applicable and consider the task complete.
 - If an error occurs (e.g., invalid country name), include the error message in the final answer and stop.
 - Do not repeat tool calls unnecessarily after a successful result or plot generation.
