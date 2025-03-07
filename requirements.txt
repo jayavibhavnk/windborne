@@ -4,3 +4,4 @@ langchain-groq
 geopandas
 cartopy
 matplotlib
+scipy
