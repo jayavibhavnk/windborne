@@ -1241,7 +1241,7 @@ tools = [
     Tool(
         name="BalloonCoverageAnalyzer",
         func=balloon_coverage_analyzer_wrapper,
-        description="Analyzes balloon coverage and dead zones. Input is a JSON string with 'threshold_km' (float, default 500), 'hours' (int, default 24), and 'plot' (bool, default true). Example: '{\"threshold_km\": 500, \"hours\": 24, \"plot\": true}'"
+        description="Analyzes balloon coverage and dead zones. Input is a JSON string with 'threshold_km' (float, default 500), 'hours' (int, default 24), and 'plot' (bool, default true). Example: '{\"threshold_km\": 500, \"hours\": 24, \"plot\": true}', this tool can be called only once, once its called you will stop/terminate the agent"
     )
 ]
 
