@@ -1394,5 +1394,5 @@ if user_input:
         message["plots"] = plot_paths
     st.session_state.messages.append(message)
 
-if __name__ == "__main__":
-    st.write("App is running. Replace placeholder tool classes with actual implementations for full functionality.")
+# if __name__ == "__main__":
+#     # st.write("App is running. Replace placeholder tool classes with actual implementations for full functionality.")
