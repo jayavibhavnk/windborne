@@ -1106,10 +1106,8 @@ class CountryWeatherMonitor:
                f"Balloon positions: {[b['distance'] for b in self.balloons]}")
 
 
-import streamlit as st
-import os
-import re
 import json
+import re
 from langchain.agents import Tool, AgentExecutor, LLMSingleActionAgent, AgentOutputParser
 from langchain.prompts import StringPromptTemplate
 from langchain import LLMChain
@@ -1118,7 +1116,8 @@ from langchain.schema import AgentAction, AgentFinish
 from typing import List, Union
 import geopandas as gpd
 
-# Wrapper Functions (Copied from your code)
+
+# Wrapper Functions with Standardized Outputs
 def balloon_tracker_wrapper(input_str):
     try:
         input_dict = json.loads(input_str)
@@ -1185,6 +1184,7 @@ def country_weather_monitor_wrapper(input_str):
         country_name = input_dict.get('country_name')
         if not country_name:
             return "Error: 'country_name' is required for CountryWeatherMonitor"
+        
         result = CountryWeatherMonitor().monitor(**input_dict)
         summary = result['summary']
         plot_path = result['plot_path'] if result['plot_path'] else "No plot generated"
@@ -1206,46 +1206,46 @@ def balloon_coverage_analyzer_wrapper(input_str):
     except Exception as e:
         return f"Error in BalloonCoverageAnalyzer: {str(e)}"
 
-# Define Tools
+# Define Tools with Wrappers
 tools = [
     Tool(
         name="BalloonTracker",
         func=balloon_tracker_wrapper,
-        description="Tracks balloon positions. Input: JSON with 'num_balloons' (int, optional), 'history_hours' (int, default 24)."
+        description="Tracks balloon positions. Input is a JSON string with 'num_balloons' (int, optional) and 'history_hours' (int, default 24). Example: '{\"num_balloons\": 5, \"history_hours\": 24}'"
     ),
     Tool(
         name="AltitudeAnalyzer",
         func=altitude_analyzer_wrapper,
-        description="Analyzes balloon altitude patterns. Input: JSON with 'num_hours' (int, default 4)."
+        description="Analyzes balloon altitude patterns. Input is a JSON string with 'num_hours' (int, default 4). Example: '{\"num_hours\": 4}'"
     ),
     Tool(
         name="WindSpeedTool",
         func=wind_speed_tool_wrapper,
-        description="Analyzes wind speeds. Input: JSON with 'hours' (int, default 2), 'top_n' (int, default 5)."
+        description="Analyzes wind speeds. Input is a JSON string with 'hours' (int, default 2) and 'top_n' (int, default 5). Example: '{\"hours\": 2, \"top_n\": 5}'"
     ),
     Tool(
         name="BalloonWeatherAnalyzer",
         func=balloon_weather_analyzer_wrapper,
-        description="Analyzes weather around balloons. Input: JSON with 'n' (int, default 5), 'plot' (bool, default true)."
+        description="Analyzes weather conditions around balloons. Input is a JSON string with 'n' (int, default 5) and 'plot' (bool, default true). Example: '{\"n\": 3, \"plot\": true}'"
     ),
     Tool(
         name="BalloonPlaneProximity",
         func=balloon_plane_proximity_wrapper,
-        description="Checks proximity to aircraft. Input: JSON with 'distance_km' (float, default 100), 'plot' (bool, default true)."
+        description="Checks proximity between balloons and aircraft. Input is a JSON string with 'distance_km' (float, default 100) and 'plot' (bool, default true). Example: '{\"distance_km\": 100, \"plot\": true}'"
     ),
     Tool(
         name="CountryWeatherMonitor",
         func=country_weather_monitor_wrapper,
-        description="Monitors weather near a country. Input: JSON with 'country_name' (str, required), 'buffer_km' (float, default 500), 'plot' (bool, default true)."
+        description="Monitors weather near a country's borders. Input is a JSON string with 'country_name' (str, required), 'buffer_km' (float, default 500), and 'plot' (bool, default true). Example: '{\"country_name\": \"United Kingdom\", \"buffer_km\": 300, \"plot\": true}'"
     ),
     Tool(
         name="BalloonCoverageAnalyzer",
         func=balloon_coverage_analyzer_wrapper,
-        description="Analyzes balloon coverage. Input: JSON with 'threshold_km' (float, default 500), 'hours' (int, default 24), 'plot' (bool, default true)."
+        description="Analyzes balloon coverage and dead zones. Input is a JSON string with 'threshold_km' (float, default 500), 'hours' (int, default 24), and 'plot' (bool, default true). Example: '{\"threshold_km\": 500, \"hours\": 24, \"plot\": true}'"
     )
 ]
 
-# Prompt Template and Agent Setup
+# Enhanced Prompt Template
 template = """You are an advanced balloon monitoring and analysis system designed to assist users by analyzing balloon data, weather conditions, and related factors using specialized tools. Your goal is to interpret the user's question, select the appropriate tool, provide the correct input, and deliver a clear, actionable answer.
 
 You have access to the following tools:
@@ -1265,19 +1265,26 @@ Thought: [I now know the final answer]
 Final Answer: [the concise answer to the original question]
 
 **Instructions:**
-- For each Action Input, provide a valid JSON string matching the tool's expected parameters.
+- For each Action Input, provide a valid JSON string matching the tool's expected parameters (see tool descriptions for details).
 - Use lowercase 'true' and 'false' for boolean values in JSON.
-- If a parameter is optional and not specified, use the default value or omit it.
-- Be thorough and clear in your Thought steps.
+- If a parameter is optional and not specified by the user, use the default value or omit it if appropriate.
+- Be thorough, conversational, and clear in your Thought steps to explain your reasoning.
+- If the question is unclear, make reasonable assumptions and explain them.
 - If the observation contains 'Task completed', summarize the results and provide the final answer, then stop.
-- Include plot paths in the final answer if generated.
-- If an error occurs, include it in the final answer and stop.
+- Some tools generate plots; include the plot path in your final answer if applicable and consider the task complete.
+- If an error occurs (e.g., invalid country name), include the error message in the final answer and stop.
+- Do not repeat tool calls unnecessarily after a successful result or plot generation.
+- If you have reached a good result, you can end/stop, dont keep calling the function again and again
+- If task is completed, terminate please!!!!!! please dont irritate me, if you get the result terminate immediately, sometimes the result is just a plot
+- Dont try to replace one tool with another you will not get the right result
+
 
 Begin!
 
 Question: {input}
 {agent_scratchpad}"""
 
+# Custom Prompt Template
 class CustomPromptTemplate(StringPromptTemplate):
     template: str
     tools: List[Tool]
@@ -1293,6 +1300,7 @@ class CustomPromptTemplate(StringPromptTemplate):
         kwargs["tool_names"] = ", ".join([tool.name for tool in self.tools])
         return self.template.format(**kwargs)
 
+# Custom Output Parser
 class CustomOutputParser(AgentOutputParser):
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
         if "Final Answer:" in llm_output:
@@ -1305,6 +1313,7 @@ class CustomOutputParser(AgentOutputParser):
         action_input = match.group(2).strip()
         return AgentAction(tool=action, tool_input=action_input, log=llm_output)
 
+# Initialize Agent Components
 llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.7)
 prompt = CustomPromptTemplate(template=template, tools=tools, input_variables=["input", "intermediate_steps"])
 output_parser = CustomOutputParser()
@@ -1312,6 +1321,49 @@ llm_chain = LLMChain(llm=llm, prompt=prompt)
 agent = LLMSingleActionAgent(llm_chain=llm_chain, output_parser=output_parser, stop=["\nObservation:"], allowed_tools=[tool.name for tool in tools])
 agent_executor = AgentExecutor.from_agent_and_tools(agent=agent, tools=tools, verbose=True)
 
+# Example Usage
+if __name__ == "__main__":
+    # # Example 1: Check proximity to planes
+    # question1 = "balloon locations on the map last 24 hours"
+    # print("Running example 1...")
+    # result1 = agent_executor.run(question1)
+    # print("Result for example 1:", result1)
+
+    # # Example 2: Check proximity to planes
+    # question1 = "planes near balloons, 50 kms"
+    # print("Running example 1...")
+    # result1 = agent_executor.run(question1)
+    # print("Result for example 1:", result1)
+
+    # #Example 3: 
+    # question2 = "calculate wind speed using the balloons, use last 2 hours"
+    # print("\nRunning example 2...")
+    # result2 = agent_executor.run(question2)
+    # print("Result for example 2:", result2)
+
+    # #Example 4: 
+    # question2 = "top 5 balloons weather surroundings"
+    # print("\nRunning example 2...")
+    # result2 = agent_executor.run(question2)
+    # print("Result for example 2:", result2)
+
+    # #Example 5: 
+    # question2 = "Altitude analysis"
+    # print("\nRunning example 2...")
+    # result2 = agent_executor.run(question2)
+    # print("Result for example 2:", result2)
+
+    # #Example 6: 
+    # question2 = "check deadzones"
+    # print("\nRunning example 2...")
+    # result2 = agent_executor.run(question2)
+    # print("Result for example 2:", result2)
+
+    # #Example 7: 
+    # question2 = "check how many balloons are surrounding France for weather analysis"
+    # print("\nRunning example 2...")
+    # result2 = agent_executor.run(question2)
+    # print("Result for example 2:", result2)
 # Function to Extract Plot Paths
 def extract_plot_paths(text):
     """Extract one or more plot paths from the agent's response."""
