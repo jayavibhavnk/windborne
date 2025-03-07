@@ -21,7 +21,7 @@ class CountryWeatherMonitor():
 
     def __init__(self):
         self.world = gpd.read_file(
-            '/content/110m_cultural.zip',
+            '110m_cultural.zip',
             layer='ne_110m_admin_0_countries'  # Explicit layer to prevent warnings
         )
         self.country_name = None
