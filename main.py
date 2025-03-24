@@ -93,7 +93,7 @@ class CountryWeatherMonitor():
             print(f"Weather API error: {e}")
             return None
     
-    @st.cache_data
+    # @st.cache_data
     def _generate_plot(self):
         """Adapted plot_weather_map with auto-saving"""
         fig = plt.figure(figsize=(20, 12))
