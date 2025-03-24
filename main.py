@@ -1710,6 +1710,12 @@ with st.sidebar:
      
      """)
 
+import streamlit as st
+import re
+import os
+import io
+from contextlib import redirect_stdout
+
 # Title and description
 st.title("🎈 Balloon Monitoring and Analysis System")
 
@@ -1725,16 +1731,10 @@ with st.expander("✨ Sample Prompts"):
     - *check how many balloons are surrounding France for weather analysis*
     """)
 
-# Display chat history
+# Display chat history (excluding plots)
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        if "plots" in message:
-            for plot_path in message["plots"]:
-                if os.path.exists(plot_path):
-                    st.image(plot_path, caption=os.path.basename(plot_path))
-                else:
-                    st.write(f"*Plot file not found: {plot_path}*")
 
 # User input field
 user_input = st.chat_input("Ask your question here...")
@@ -1748,7 +1748,7 @@ def extract_plot_paths(text):
 if user_input:
     # Add user message to history and display it
     st.session_state.messages.append({"role": "user", "content": user_input})
-    
+
     with st.chat_message("user"):
         st.markdown(user_input)
 
@@ -1760,13 +1760,12 @@ if user_input:
                 result = agent_executor.run(user_input)  # assumes agent_executor is defined elsewhere
             verbose_output = f.getvalue()
             final_answer = result
-            # plot_paths = extract_plot_paths(final_answer)
             plot_paths = list(set(extract_plot_paths(final_answer)))  # Remove duplicates
-            
+
             # If no plots found in final answer, check verbose output too
             if not plot_paths:
                 plot_paths = extract_plot_paths(verbose_output)
-                
+
     except Exception as e:
         final_answer = f"⚠️ Oops! Something went wrong: {str(e)}"
         verbose_output = ""
@@ -1780,19 +1779,100 @@ if user_input:
 
         st.markdown(final_answer)
 
+        # Display plots **without storing them in session state**
         for path in plot_paths:
             if os.path.exists(path):
                 st.image(path, caption=os.path.basename(path))
             else:
                 st.write(f"*Plot file not found: {path}*")
 
-    # Add assistant message to history, including plots if any
-    assistant_message = {"role": "assistant", "content": final_answer}
-    
-    if plot_paths:
-        assistant_message["plots"] = plot_paths
+    # Add assistant response to chat history (without storing plot paths)
+    st.session_state.messages.append({"role": "assistant", "content": final_answer})
 
-    st.session_state.messages.append(assistant_message)
+
+# # Title and description
+# st.title("🎈 Balloon Monitoring and Analysis System")
+
+# # Sample prompts as expandable dropdown (expander)
+# with st.expander("✨ Sample Prompts"):
+#     st.markdown("""
+#     - *balloon locations on the map last 24 hours*
+#     - *planes near balloons, 50 kms*
+#     - *calculate wind speed using the balloons, use last 2 hours*
+#     - *top 5 balloons weather surroundings*
+#     - *Altitude analysis*
+#     - *check deadzones*
+#     - *check how many balloons are surrounding France for weather analysis*
+#     """)
+
+# # Display chat history
+# for message in st.session_state.messages:
+#     with st.chat_message(message["role"]):
+#         st.markdown(message["content"])
+#         if "plots" in message:
+#             for plot_path in message["plots"]:
+#                 if os.path.exists(plot_path):
+#                     st.image(plot_path, caption=os.path.basename(plot_path))
+#                 else:
+#                     st.write(f"*Plot file not found: {plot_path}*")
+
+# # User input field
+# user_input = st.chat_input("Ask your question here...")
+
+# # Helper function to extract plot paths from agent output
+# def extract_plot_paths(text):
+#     return re.findall(r"Plot generated at: (\S+\.png)", text) + \
+#            re.findall(r"\b\w+:\s*(\S+\.png)", text)
+
+# # Process user input
+# if user_input:
+#     # Add user message to history and display it
+#     st.session_state.messages.append({"role": "user", "content": user_input})
+    
+#     with st.chat_message("user"):
+#         st.markdown(user_input)
+
+#     # Run agent with verbose output capture
+#     try:
+#         with st.spinner("🚀 Processing your request..."):
+#             f = io.StringIO()
+#             with redirect_stdout(f):
+#                 result = agent_executor.run(user_input)  # assumes agent_executor is defined elsewhere
+#             verbose_output = f.getvalue()
+#             final_answer = result
+#             # plot_paths = extract_plot_paths(final_answer)
+#             plot_paths = list(set(extract_plot_paths(final_answer)))  # Remove duplicates
+            
+#             # If no plots found in final answer, check verbose output too
+#             if not plot_paths:
+#                 plot_paths = extract_plot_paths(verbose_output)
+                
+#     except Exception as e:
+#         final_answer = f"⚠️ Oops! Something went wrong: {str(e)}"
+#         verbose_output = ""
+#         plot_paths = []
+
+#     # Display assistant response clearly separated into sections
+#     with st.chat_message("assistant"):
+#         if verbose_output:
+#             with st.expander("🔍 Detailed Steps"):
+#                 st.text(verbose_output)
+
+#         st.markdown(final_answer)
+
+#         for path in plot_paths:
+#             if os.path.exists(path):
+#                 st.image(path, caption=os.path.basename(path))
+#             else:
+#                 st.write(f"*Plot file not found: {path}*")
+
+#     # Add assistant message to history, including plots if any
+#     assistant_message = {"role": "assistant", "content": final_answer}
+    
+#     if plot_paths:
+#         assistant_message["plots"] = plot_paths
+
+#     st.session_state.messages.append(assistant_message)
 
 
 # # # Streamlit UI Setup
