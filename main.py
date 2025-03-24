@@ -1759,7 +1759,8 @@ if user_input:
                 result = agent_executor.run(user_input)  # assumes agent_executor is defined elsewhere
             verbose_output = f.getvalue()
             final_answer = result
-            plot_paths = extract_plot_paths(final_answer)
+            # plot_paths = extract_plot_paths(final_answer)
+            plot_paths = list(set(extract_plot_paths(final_answer)))  # Remove duplicates
             
             # If no plots found in final answer, check verbose output too
             if not plot_paths:
